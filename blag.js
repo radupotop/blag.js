@@ -34,15 +34,25 @@ function readDir() {
 function parseFile(filename) {
     
     var htmlFilename = filename.replace('.md', '.html');
-    pages.push(htmlFilename);
     
     fs.readFile(contentDir + filename, 'utf8', function(err, fileContent) {
+        
+        var meta = JSON.parse(fileContent.split("\n")[0]);
+        
+        if(!meta.draft) {
+            pages.push({
+                'meta': meta,
+                'filename': htmlFilename
+            });
+        }
+        
         var htmlBody = renderHtml(fileContent);
         var htmlContent = header + htmlBody + footer;
         fs.writeFile(outputDir + htmlFilename, htmlContent);
+        
+        generateIndex();
+        
     });
-    
-    generateIndex();
     
 }
 
@@ -59,7 +69,7 @@ function renderHtml(mdContent) {
 function generateIndex() {
     var body = '';
     pages.forEach(function(page) {
-        body += '<a href="'+page+'">'+page+'</a><br>';
+        body += '<a href="'+page.filename+'">'+page.meta.title+'</a> <em class="date">'+page.meta.date+'</em><br>';
     });
     fs.writeFile(outputDir + 'index.html', header + body + footer);
 }
