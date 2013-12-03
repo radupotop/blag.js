@@ -20,8 +20,10 @@ var footer = fs.readFileSync(templateDir + 'footer.html', 'utf8');
 function readDir() {
     fs.readdir(contentDir, function(err, allFiles) {
         
-        mdFiles = allFiles.filter(function(filename){
-            return (/\.md$/).test(filename);
+        allFiles.forEach(function(filename) {
+            if((/\.md$/).test(filename)) {
+                mdFiles.push(filename.replace('.md', ''));
+            }
         });
         
         mdFiles.forEach(parseFile);
@@ -34,26 +36,23 @@ function readDir() {
  */
 function parseFile(filename, i, array) {
     
-    var htmlFilename = filename.replace('.md', '.html');
-    
-    fs.readFile(contentDir + filename, 'utf8', function(err, fileContent) {
+    fs.readFile(contentDir + filename + '.md', 'utf8', function(err, fileContent) {
         
         var content = parseContent(fileContent);
         
-        if(content.meta.draft || content.meta.type != 'post') {
-            return;
+        if(!content.meta.draft && content.meta.type == 'post') {
+            
+            pages.push({
+                'meta': content.meta,
+                'filename': filename
+            });
+            
+            var htmlContent = renderHtml(content.body);
+            writeFile(filename + '.html', htmlContent);
+            
+            generateIndex();
+            
         }
-        
-        pages.push({
-            'meta': content.meta,
-            'filename': htmlFilename
-        });
-        
-        var htmlBody = renderHtml(content.body);
-        var htmlContent = header + htmlBody + footer;
-        fs.writeFile(outputDir + htmlFilename, htmlContent);
-        
-        generateIndex();
         
     });
     
@@ -67,25 +66,32 @@ function parseContent(content) {
     return {
         'meta': JSON.parse(content.substring(0, nlIndex)),
         'body': content.substring(nlIndex)
-    }
+    };
 }
 
 /**
  * Render MD as HTML
  */
 function renderHtml(mdContent) {
-   return markdown.toHTML(mdContent);
+    return header + markdown.toHTML(mdContent) + footer;
 }
 
 /**
- * Generate index.html
+ * Write output file
+ */
+function writeFile(htmlFilename, htmlContent) {
+    fs.writeFile(outputDir + htmlFilename, htmlContent);
+}
+
+/**
+ * Generate index markdown
  */
 function generateIndex() {
     var body = '';
     pages.forEach(function(page) {
         body += '<a href="'+page.filename+'">'+page.meta.title+'</a> <em class="date">'+page.meta.date+'</em><br>';
     });
-    fs.writeFile(outputDir + 'index.html', header + body + footer);
+    writeFile('index.html', header + body + footer);
 }
 
 
