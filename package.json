@@ -1,0 +1,8 @@
+{
+  "name": "blag.js",
+  "main": "blag.js",
+  "author": "Radu Potop",
+  "dependencies" : {
+    "markdown" :  "0.5.0"
+  }
+}
