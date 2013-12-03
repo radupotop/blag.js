@@ -6,6 +6,7 @@ var outputDir = 'output/';
 var templateDir = 'template/';
 var header, footer;
 var pages = [];
+var mdFiles = [];
 
 /**
  * Read header and footer
@@ -19,7 +20,7 @@ var footer = fs.readFileSync(templateDir + 'footer.html', 'utf8');
 function readDir() {
     fs.readdir(contentDir, function(err, allFiles) {
         
-        var mdFiles = allFiles.filter(function(filename){
+        mdFiles = allFiles.filter(function(filename){
             return (/\.md$/).test(filename);
         });
         
@@ -31,22 +32,24 @@ function readDir() {
 /**
  * Parse each Markdown file
  */
-function parseFile(filename) {
+function parseFile(filename, i, array) {
     
     var htmlFilename = filename.replace('.md', '.html');
     
     fs.readFile(contentDir + filename, 'utf8', function(err, fileContent) {
         
-        var meta = JSON.parse(fileContent.split("\n")[0]);
+        var content = parseContent(fileContent);
         
-        if(!meta.draft) {
-            pages.push({
-                'meta': meta,
-                'filename': htmlFilename
-            });
+        if(content.meta.draft || content.meta.type != 'post') {
+            return;
         }
         
-        var htmlBody = renderHtml(fileContent);
+        pages.push({
+            'meta': content.meta,
+            'filename': htmlFilename
+        });
+        
+        var htmlBody = renderHtml(content.body);
         var htmlContent = header + htmlBody + footer;
         fs.writeFile(outputDir + htmlFilename, htmlContent);
         
@@ -54,6 +57,17 @@ function parseFile(filename) {
         
     });
     
+}
+
+/**
+ * Parse content into meta
+ */
+function parseContent(content) {
+    var nlIndex = content.indexOf('\n');
+    return {
+        'meta': JSON.parse(content.substring(0, nlIndex)),
+        'body': content.substring(nlIndex)
+    }
 }
 
 /**
