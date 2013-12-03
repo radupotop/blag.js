@@ -5,24 +5,26 @@ var contentDir = 'content/';
 var outputDir = 'output/';
 var templateDir = 'template/';
 var header, footer;
+var pages = [];
 
 /**
  * Read header and footer
  */
-fs.readFile(templateDir + 'header.html', 'utf8', function(err, data) {
-    header = data;
-});
-
-fs.readFile(templateDir + 'footer.html', 'utf8', function(err, data) {
-    footer = data;
-});
+var header = fs.readFileSync(templateDir + 'header.html', 'utf8');
+var footer = fs.readFileSync(templateDir + 'footer.html', 'utf8');
 
 /**
  * Read content dir
  */
 function readDir() {
-    fs.readdir(contentDir, function(err, files) {
-        files.forEach(parseFile);
+    fs.readdir(contentDir, function(err, allFiles) {
+        
+        var mdFiles = allFiles.filter(function(filename){
+            return (/\.md$/).test(filename);
+        });
+        
+        mdFiles.forEach(parseFile);
+        
     });
 }
 
@@ -31,17 +33,16 @@ function readDir() {
  */
 function parseFile(filename) {
     
-    if((/\.md$/).test(filename) === false) {
-        return;
-    }
-    
     var htmlFilename = filename.replace('.md', '.html');
+    pages.push(htmlFilename);
     
     fs.readFile(contentDir + filename, 'utf8', function(err, fileContent) {
         var htmlBody = renderHtml(fileContent);
         var htmlContent = header + htmlBody + footer;
         fs.writeFile(outputDir + htmlFilename, htmlContent);
     });
+    
+    generateIndex();
     
 }
 
@@ -50,6 +51,17 @@ function parseFile(filename) {
  */
 function renderHtml(mdContent) {
    return markdown.toHTML(mdContent);
+}
+
+/**
+ * Generate index.html
+ */
+function generateIndex() {
+    var body = '';
+    pages.forEach(function(page) {
+        body += '<a href="'+page+'">'+page+'</a><br>';
+    });
+    fs.writeFile(outputDir + 'index.html', header + body + footer);
 }
 
 
