@@ -18,20 +18,32 @@ fs.readFile(templateDir + 'footer.html', 'utf8', function(err, data) {
 });
 
 /**
- * Read content filed
+ * Read content dir
  */
-fs.readdir(contentDir, function(err, files) {
-    files.forEach(function(filename) {
-        if((/\.md$/).test(filename)) {
-            fs.readFile(contentDir + filename, 'utf8', function(err, fileContent) {
-                //~console.log(fileContent);
-                var htmlBody = renderHtml(fileContent);
-                var htmlContent = header + htmlBody + footer;
-                fs.writeFile(outputDir + filename.replace('.md', '.html'), htmlContent);
-            });
-        }
+function readDir() {
+    fs.readdir(contentDir, function(err, files) {
+        files.forEach(parseFile);
     });
-});
+}
+
+/**
+ * Parse each Markdown file
+ */
+function parseFile(filename) {
+    
+    if((/\.md$/).test(filename) === false) {
+        return;
+    }
+    
+    var htmlFilename = filename.replace('.md', '.html');
+    
+    fs.readFile(contentDir + filename, 'utf8', function(err, fileContent) {
+        var htmlBody = renderHtml(fileContent);
+        var htmlContent = header + htmlBody + footer;
+        fs.writeFile(outputDir + htmlFilename, htmlContent);
+    });
+    
+}
 
 /**
  * Render MD as HTML
@@ -39,3 +51,6 @@ fs.readdir(contentDir, function(err, files) {
 function renderHtml(mdContent) {
    return markdown.toHTML(mdContent);
 }
+
+
+readDir();
