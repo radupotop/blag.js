@@ -89,7 +89,7 @@ function writeFile(htmlFilename, htmlContent) {
 function generateIndex() {
     var body = '';
     pages.forEach(function(page) {
-        body += '<a href="'+page.filename+'">'+page.meta.title+'</a> <em class="date">'+page.meta.date+'</em><br>';
+        body += '<a href="'+page.filename+'.html">'+page.meta.title+'</a> <em class="date">'+page.meta.date+'</em><br>';
     });
     writeFile('index.html', header + body + footer);
 }
